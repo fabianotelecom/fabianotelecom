@@ -13,7 +13,7 @@ Acredito que tecnologia sem liderança é apenas ferramenta. E liderança sem te
 
 - 🤖 Implemento **IA em operações reais** de voz, chat e URA — não em POC, em produção
 - 📊 Construo **dashboards, automações, apps e plataformas** digitais
-- 🔗 Integro **CRMs** (Salesforce, HubSpot) e arquitetura **cloud (AWS)** a contact centers
+- 🔗 Integro sistemas com os principais **CRMs** do mercado e arquitetura **cloud (AWS)** a contact centers
 - 📋 Navego **compliance regulatório** (LGPD, Anatel) sem travar a operação
 - 👥 Lidero e desenvolvo **times técnicos e operacionais** em ambientes de alta pressão
 
