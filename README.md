@@ -1,4 +1,4 @@
-# Olá, eu sou Fabiano Augusto 👋
+# Olá, eu sou Fabiano Augusto 
 
 ### Líder em TI & Telecom | Diretor de Operações na Vonix Tecnologia | IA aplicada a Contact Centers
 
