@@ -1,4 +1,4 @@
-# Olá, eu sou Fabiano Augusto 
+# Olá, eu sou o Fabiano Augusto.
 
 ### Líder em TI & Telecom | Diretor de Operações na Vonix Tecnologia | IA aplicada a Contact Centers
 
@@ -13,7 +13,7 @@ Acredito que tecnologia sem liderança é apenas ferramenta. E liderança sem te
 
 - 🤖 Implemento **IA em operações reais** de voz, chat e URA — não em POC, em produção
 - 📊 Construo **dashboards, automações, apps e plataformas** digitais
-- 🔗 Integro sistemas com os principais **CRMs** do mercado e arquitetura **cloud (AWS)** a contact centers
+- 🔗 Integro **CRMs** (Salesforce, HubSpot) e arquitetura **cloud (AWS)** a contact centers
 - 📋 Navego **compliance regulatório** (LGPD, Anatel) sem travar a operação
 - 👥 Lidero e desenvolvo **times técnicos e operacionais** em ambientes de alta pressão
 
@@ -31,7 +31,7 @@ Acredito que tecnologia sem liderança é apenas ferramenta. E liderança sem te
 
 ---
 
-## 📦 Projetos que liderei e construí
+## 🛠️ Projetos que construí:
 
 | Projeto | Descrição | Tecnologias |
 |---|---|---|
@@ -41,6 +41,27 @@ Acredito que tecnologia sem liderança é apenas ferramenta. E liderança sem te
 | **Manual VonixCC** | Documentação técnica completa da plataforma VonixCC | Markdown, ReportLab |
 | **Rizzon Site** | Plataforma web para grupo de produção musical | Next.js, Supabase, Tailwind |
 | **Portal de Informações** | Portal corporativo de informações e gestão | TypeScript, React |
+
+---
+
+## 🏆 Projetos que eu lidero:
+
+### Plataforma VonixCC — Diretor de Operações e Product Owner
+**Janeiro de 2024 até o momento**
+
+Desde que assumi a Diretoria de Operações da Vonix Tecnologia, lidero o time e atuo como PO do produto VonixCC, uma das plataformas omnichannel mais completas do Brasil.
+
+Principais funcionalidades entregues nesse período:
+
+| Funcionalidade | Descrição |
+|---|---|
+| **Jornada do Agente** | WorkForce focado em operações de Call Center, gerenciando toda a jornada do agente na operação |
+| **Análise de Chamadas por IA** | Transcrição de chamadas com identificação de Não Conformidades Graves (NCG) e insights estratégicos para operações de atendimento |
+| **Base de Scoragem de Telefones** | Sistema que determina as chances de contato atender com base no histórico de discagem |
+| **Atendimento Preview** | Carteirização de contatos com exibição dos dados do cliente antes da discagem, com acompanhamento em tempo real pelo Supervisor via Dashboard |
+| **Dashboard de Controle Anatel** | Painel de monitoramento e conformidade regulatória integrado à plataforma |
+
+E muito mais em evolução contínua.
 
 ---
 
@@ -55,8 +76,9 @@ Acredito que tecnologia sem liderança é apenas ferramenta. E liderança sem te
 ## 🌐 Onde me encontrar
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/fabiano-augusto-92571682/)
+[![Instagram](https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/eusouofabianoaugusto/)
+[![WhatsApp](https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/5511994085280)
 [![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:fabiano@vonix.com.br)
-
 ---
 
 > *"Tecnologia sem liderança é apenas ferramenta. Liderança sem tecnologia, no cenário atual, é limitação."*
