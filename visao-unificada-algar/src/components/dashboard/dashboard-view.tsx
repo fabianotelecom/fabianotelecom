@@ -19,11 +19,12 @@ const DISCADOR_META: Record<StatusDiscador, { label: string; color: string }> = 
 };
 
 export function DashboardView() {
-  // Atualiza a cada 10s (polling). Ajuste conforme necessidade operacional.
+  // Atualiza por polling. 20s equilibra atualidade x custo (o coletor
+  // consulta status por fila; parceiros podem ter muitas filas).
   const { data, isLoading } = useSWR<{ linhas: LinhaDashboard[]; fonte: string }>(
     "/api/dashboard",
     fetcher,
-    { refreshInterval: 10_000 },
+    { refreshInterval: 20_000 },
   );
 
   const linhas = data?.linhas ?? [];

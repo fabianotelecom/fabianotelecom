@@ -85,28 +85,23 @@ src/
 supabase/schema.sql
 ```
 
-## Integração com as APIs Vonix
+## Integração com as APIs Vonix (validada em sandbox)
 
-- **Base da API:** `https://{customer}.api.vonixcc.com.br` (o `customer` é o
-  identificador do parceiro, cadastrado por parceiro).
-- **Autenticação:** header `Authorization: <token>` (token cru).
-- **Fila + status do discador (integrado):** via `contatos-discador`
+- **Base da API:** `https://{customer}.api.vonixcc.com.br`.
+- **Autenticação:** header `Authorization: Bearer <token>`.
+- **Fila + status do discador:** via `contatos-discador` (respostas em **XML**)
   - `GET /v1/queues` → filas do token
-  - `GET /v1/queue/{id}/status` (XML) → `stored_contacts`, `status`, `last_feed`
-  - Agregação: contatos na fila = Σ `stored_contacts`; status do discador
-    derivado dos status das filas.
-
-- **Roster de agentes / colméia (integrado):** via `agentes-pabx`
-  - `GET /agents` → lista de agentes (+ total)
-  - `POST /agent/{id}/status` → estado de cada agente (logado/pausa/ramal)
-  - A colméia mostra os agentes **logados** (status ≠ offline), coloridos pelo
-    padrão VonixCC. Consultas de status com limite de concorrência e teto
-    (`VONIX_MAX_AGENT_STATUS`).
-
-> Observação: o payload de `/agent/{id}/status` não é detalhado na spec —
-> o parsing é defensivo (`normalizarStatusAgente` cobre variações de
-> `status`/`state`/`loggedIn`/`paused`/`ramal`). Confirmar os nomes exatos dos
-> campos com um token de sandbox e ajustar se necessário.
+  - `GET /v1/queue/{id}/status` → `status`, `stored_contacts`, `total_contacts`, `last_feed`
+  - Contatos na fila = Σ `stored_contacts`; status do discador agregado das
+    filas (`Discando`→ativo, `Em pausa`→pausado, `Fora de horário`/`Parada`→parado).
+  - Teto de filas consultadas por ciclo: `VONIX_MAX_QUEUE_STATUS` (sandbox tem ~133).
+- **Roster de agentes / colméia:** via `agentes-pabx`
+  - `GET /agents` → **já traz o status ao vivo** de cada agente numa única
+    chamada: `status` (ONLINE/PAUSED/OFFLINE), `talkingCallId`, `pauseAt`,
+    `loginExtension`.
+  - Mapeamento: `talkingCallId` → Em Atendimento 🟡; `PAUSED`/`pauseAt` → Em
+    Pausa 🩷; `ONLINE` → Disponível 🟢; `OFFLINE` → offline (fora da colméia).
+  - A colméia mostra apenas os agentes **logados** (status ≠ offline).
 
 ## Roadmap sugerido
 
