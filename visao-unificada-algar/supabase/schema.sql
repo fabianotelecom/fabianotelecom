@@ -57,7 +57,8 @@ create table if not exists public.parceiros (
   id_parceiro    text not null,           -- id do parceiro (origem externa)
   cpf_cnpj       text,
   razao_social   text,
-  url_vonix      text not null,           -- ex.: https://parceiro.vonixcc.com.br
+  customer       text not null,           -- identificador Vonix; base = https://{customer}.api.vonixcc.com.br
+  url_vonix      text,                    -- URL do painel (opcional, referência)
   token_api_enc  text not null,           -- token criptografado (payload base64)
   ativo          boolean not null default true,
   criado_em      timestamptz not null default now(),
@@ -161,5 +162,5 @@ create policy snapshots_select on public.snapshots_dashboard for select
 -- ---------------------------------------------------------------------
 create or replace view public.parceiros_publicos as
   select id, gestor_id, nome_parceiro, id_gestor, id_parceiro,
-         cpf_cnpj, razao_social, url_vonix, ativo, criado_em, atualizado_em
+         cpf_cnpj, razao_social, customer, url_vonix, ativo, criado_em, atualizado_em
   from public.parceiros;

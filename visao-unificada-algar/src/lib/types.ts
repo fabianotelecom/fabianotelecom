@@ -20,7 +20,11 @@ export interface Parceiro {
   id_parceiro: string;
   cpf_cnpj?: string | null;
   razao_social?: string | null;
-  url_vonix: string;
+  // Identificador do cliente na plataforma Vonix (subdomínio).
+  // A base da API é https://{customer}.api.vonixcc.com.br
+  customer: string;
+  // URL do painel Vonix (opcional, apenas link de referência)
+  url_vonix?: string | null;
   ativo: boolean;
   criado_em?: string;
   atualizado_em?: string;
@@ -53,6 +57,12 @@ export const STATUS_META: Record<
 
 export type StatusDiscador = "ativo" | "pausado" | "parado" | "desconhecido";
 
+// Origem do roster de agentes ao vivo (colméia + nº logados).
+// As APIs contatos-discador/agentes-pabx NÃO expõem esse roster; ele virá
+// de uma fonte realtime/supervisão a definir. Enquanto isso: "mock" (demo)
+// ou "pendente" (dados reais de fila/discador, agentes ainda sem fonte).
+export type FonteAgentes = "realtime" | "mock" | "pendente";
+
 export interface AgenteAoVivo {
   id: string;
   nome: string;
@@ -77,6 +87,9 @@ export interface LinhaDashboard {
   chamadasAtivas?: number;
   tmaSegundos?: number;
   taxaOcupacao?: number; // 0..1
+  // Detalhe das filas do parceiro (da API contatos-discador)
+  filas?: Array<{ id: string; nome?: string; status: StatusDiscador; contatos: number }>;
+  fonteAgentes: FonteAgentes;
   atualizadoEm: string;
   erro?: string | null;
 }

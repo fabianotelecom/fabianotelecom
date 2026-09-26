@@ -105,6 +105,17 @@ export function mockLinhas(): LinhaDashboard[] {
       chamadasAtivas: offline ? 0 : contadores.atendimento,
       tmaSegundos: offline ? undefined : 180 + idx * 22,
       taxaOcupacao: offline ? undefined : 0.55 + idx * 0.07,
+      filas: offline
+        ? []
+        : [
+            {
+              id: `q${idx}`,
+              nome: `Fila ${p.nome}`,
+              status: (p.disc as StatusDiscador),
+              contatos: Math.round((idx + 1) * 137.5),
+            },
+          ],
+      fonteAgentes: "mock",
       atualizadoEm: new Date().toISOString(),
       erro: offline ? "Servidor não respondeu (timeout)" : null,
     };

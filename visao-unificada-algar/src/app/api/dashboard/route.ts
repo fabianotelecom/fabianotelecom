@@ -29,7 +29,7 @@ export async function GET() {
     const supa = createServiceClient();
     const { data: parceiros, error } = await supa
       .from("parceiros")
-      .select("id, nome_parceiro, url_vonix, token_api_enc, gestor_id, gestores(nome)")
+      .select("id, nome_parceiro, customer, token_api_enc, gestor_id, gestores(nome)")
       .eq("ativo", true);
 
     if (error) throw error;
@@ -43,7 +43,7 @@ export async function GET() {
           parceiroId: p.id,
           nomeParceiro: p.nome_parceiro,
           gestor: p.gestores?.nome ?? null,
-          baseUrl: p.url_vonix,
+          customer: p.customer,
           token: decryptToken(p.token_api_enc),
         }),
       ),

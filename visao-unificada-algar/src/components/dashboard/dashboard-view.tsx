@@ -119,7 +119,13 @@ function ServerRow({ linha }: { linha: LinhaDashboard }) {
 
         <div className="col-span-2">
           <div className="text-xs text-slate-400">Agentes logados</div>
-          <div className="font-semibold text-slate-100">{linha.agentesLogados}</div>
+          <div className="font-semibold text-slate-100">
+            {linha.fonteAgentes === "pendente" ? (
+              <span className="text-slate-500" title="Fonte de agentes a definir">—</span>
+            ) : (
+              linha.agentesLogados
+            )}
+          </div>
         </div>
 
         <div className="col-span-1 text-xs text-slate-400">
@@ -144,7 +150,14 @@ function ServerRow({ linha }: { linha: LinhaDashboard }) {
             <div className="grid gap-6 lg:grid-cols-3">
               <div className="lg:col-span-2">
                 <CardTitle className="mb-3">Colméia de Agentes</CardTitle>
-                <AgentHoneycomb agentes={linha.agentes} />
+                {linha.fonteAgentes === "pendente" ? (
+                  <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-brand-border px-4 text-center text-xs text-slate-500">
+                    Roster de agentes ao vivo pendente de definição da fonte
+                    (realtime/supervisão). Fila e status do discador já são reais.
+                  </div>
+                ) : (
+                  <AgentHoneycomb agentes={linha.agentes} />
+                )}
               </div>
               <div>
                 <CardTitle className="mb-3">Distribuição</CardTitle>

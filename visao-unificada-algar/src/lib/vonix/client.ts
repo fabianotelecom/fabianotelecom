@@ -1,159 +1,219 @@
+import { XMLParser } from "fast-xml-parser";
 import type {
   AgenteAoVivo,
   AgenteStatus,
+  FonteAgentes,
   LinhaDashboard,
   StatusDiscador,
 } from "@/lib/types";
 
 /**
- * Cliente das APIs Vonix por servidor de parceiro.
+ * Cliente das APIs Vonix por parceiro.
  *
- * ATENÇÃO: os endpoints/campos abaixo são um MAPA PROVISÓRIO baseado no
- * padrão das APIs Vonix (contatos-discador / agentes-pabx). Os caminhos e
- * nomes de campos exatos devem ser confirmados na documentação:
- *   - https://sandbox.vonixcc.com.br/v1/api-docs/contatos-discador
- *   - https://sandbox.vonixcc.com.br/v1/api-docs/agentes-pabx
+ * Base da API (confirmado nas specs OpenAPI):
+ *   https://{customer}.api.vonixcc.com.br
+ * Autenticação: header `Authorization: <token>` (token cru).
  *
- * Ao confirmar, ajuste apenas os pontos marcados com  // TODO: confirmar
- * — o restante do app (dashboard, colméia) consome o tipo LinhaDashboard
- * e não muda.
+ * Endpoints usados (API contatos-discador):
+ *   GET /v1/queues                    -> lista de filas (JSON)
+ *   GET /v1/queue/{queueId}/status    -> status da fila (XML):
+ *        <queue id="..."><status/><stored_contacts/><last_feed/></queue>
+ *
+ * Roster de agentes ao vivo (colméia + nº logados): a API agentes-pabx é de
+ * comando (login/pause/dial/status por agente) e NÃO lista os agentes logados.
+ * Esse roster virá de uma fonte realtime/supervisão a definir — ver getRoster.
  */
 
 const TIMEOUT = Number(process.env.VONIX_API_TIMEOUT_MS ?? 8000);
 
+const xml = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: "@_",
+  parseTagValue: true,
+});
+
 interface VonixCtx {
-  baseUrl: string; // url_vonix do parceiro
-  token: string; // token de API (já descriptografado, server-side)
+  customer: string;
+  token: string;
 }
 
-async function vonixFetch<T>(
+export function buildBaseUrl(customer: string): string {
+  // Aceita tanto o identificador puro ("sandbox") quanto uma URL completa.
+  if (/^https?:\/\//i.test(customer)) return customer.replace(/\/+$/, "");
+  return `https://${customer}.api.vonixcc.com.br`;
+}
+
+async function vonixFetch(
   ctx: VonixCtx,
   path: string,
-): Promise<T> {
-  const url = new URL(path, ctx.baseUrl).toString();
+  accept: string,
+): Promise<Response> {
+  const url = `${buildBaseUrl(ctx.customer)}${path}`;
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), TIMEOUT);
   try {
-    const res = await fetch(url, {
-      headers: {
-        // TODO: confirmar esquema de auth (Bearer x-api-token etc.)
-        Authorization: `Bearer ${ctx.token}`,
-        Accept: "application/json",
-      },
+    return await fetch(url, {
+      headers: { Authorization: ctx.token, Accept: accept },
       signal: controller.signal,
       cache: "no-store",
     });
-    if (!res.ok) {
-      throw new Error(`Vonix ${res.status} em ${path}`);
-    }
-    return (await res.json()) as T;
   } finally {
     clearTimeout(t);
   }
 }
 
-// Normaliza um status textual da API para o nosso enum de status.
-function normalizarStatus(raw?: string): AgenteStatus {
-  const s = (raw ?? "").toLowerCase();
-  if (s.includes("atend") || s.includes("busy") || s.includes("call"))
-    return "atendimento";
-  if (s.includes("dispon") || s.includes("ready") || s.includes("idle"))
-    return "disponivel";
-  if (s.includes("paus") || s.includes("break") || s.includes("acw"))
-    return "pausa";
-  return "offline";
-}
-
 function normalizarStatusDiscador(raw?: string): StatusDiscador {
   const s = (raw ?? "").toLowerCase();
-  if (s.includes("ativ") || s.includes("run") || s.includes("on"))
+  if (s.includes("dial") || s.includes("run") || s.includes("ativ") || s.includes("on"))
     return "ativo";
   if (s.includes("paus")) return "pausado";
-  if (s.includes("par") || s.includes("stop") || s.includes("off"))
+  if (s.includes("stop") || s.includes("par") || s.includes("idle") || s.includes("off"))
     return "parado";
   return "desconhecido";
 }
 
-// ---- Formas de resposta ESPERADAS (a confirmar) ----
-interface DiscadorResp {
-  status?: string; // TODO: confirmar
-  contatosNaFila?: number; // TODO: confirmar
-  chamadasAtivas?: number;
+interface FilaInfo {
+  id: string;
+  nome?: string;
+  status: StatusDiscador;
+  contatos: number;
 }
-interface AgentesResp {
-  agentes?: Array<{
-    id?: string | number;
-    nome?: string;
-    status?: string;
-    ramal?: string;
-  }>;
+
+// GET /v1/queues -> tolera múltiplos formatos de resposta.
+async function getQueues(ctx: VonixCtx): Promise<Array<{ id: string; nome?: string }>> {
+  const res = await vonixFetch(ctx, "/v1/queues", "application/json");
+  if (!res.ok) throw new Error(`GET /v1/queues -> ${res.status}`);
+  const body = await res.json();
+  // Formatos possíveis: {queues:[...]}, {queue:{...}}, {queue:[...]}, [...]
+  const raw =
+    (Array.isArray(body) && body) ||
+    body?.queues ||
+    body?.queue ||
+    body?.queues?.queue ||
+    [];
+  const arr = Array.isArray(raw) ? raw : [raw];
+  return arr
+    .filter(Boolean)
+    .map((q: Record<string, unknown>) => ({
+      id: String(q.id ?? q["@_id"] ?? ""),
+      nome: (q.name ?? q.description) as string | undefined,
+    }))
+    .filter((q) => q.id);
+}
+
+// GET /v1/queue/{id}/status -> XML
+async function getQueueStatus(ctx: VonixCtx, queueId: string): Promise<FilaInfo> {
+  const res = await vonixFetch(
+    ctx,
+    `/v1/queue/${encodeURIComponent(queueId)}/status`,
+    "application/xml",
+  );
+  if (!res.ok) throw new Error(`GET /v1/queue/${queueId}/status -> ${res.status}`);
+  const text = await res.text();
+  const parsed = xml.parse(text);
+  const q = parsed?.queue ?? parsed ?? {};
+  return {
+    id: String(q["@_id"] ?? queueId),
+    status: normalizarStatusDiscador(q.status),
+    contatos: Number(q.stored_contacts ?? 0) || 0,
+  };
 }
 
 /**
- * Coleta o estado ao vivo de UM servidor Vonix e devolve a linha do dashboard.
- * Sempre resolve (nunca lança) — em erro, marca online=false e preenche `erro`.
+ * Roster de agentes ao vivo. Fonte a definir (realtime/supervisão).
+ * Retorna null enquanto a fonte não estiver ligada -> a linha marca
+ * fonteAgentes = "pendente".
+ */
+async function getRoster(_ctx: VonixCtx): Promise<AgenteAoVivo[] | null> {
+  // TODO: integrar quando a API/realtime de agentes for definida pelo Vonix.
+  return null;
+}
+
+function contar(agentes: AgenteAoVivo[]): Record<AgenteStatus, number> {
+  return agentes.reduce(
+    (acc, a) => {
+      acc[a.status] += 1;
+      return acc;
+    },
+    { atendimento: 0, disponivel: 0, pausa: 0, offline: 0 } as Record<
+      AgenteStatus,
+      number
+    >,
+  );
+}
+
+// Agrega o estado do discador a partir das filas do parceiro.
+function agregarStatusDiscador(filas: FilaInfo[]): StatusDiscador {
+  if (filas.length === 0) return "desconhecido";
+  if (filas.some((f) => f.status === "ativo")) return "ativo";
+  if (filas.every((f) => f.status === "pausado")) return "pausado";
+  if (filas.every((f) => f.status === "parado")) return "parado";
+  return "pausado";
+}
+
+/**
+ * Coleta o estado ao vivo de UM parceiro Vonix. Sempre resolve (nunca lança).
  */
 export async function coletarLinha(params: {
   parceiroId: string;
   nomeParceiro: string;
   gestor?: string | null;
-  baseUrl: string;
+  customer: string;
   token: string;
 }): Promise<LinhaDashboard> {
-  const ctx: VonixCtx = { baseUrl: params.baseUrl, token: params.token };
+  const ctx: VonixCtx = { customer: params.customer, token: params.token };
   const base = (): LinhaDashboard => ({
     parceiroId: params.parceiroId,
     nomeParceiro: params.nomeParceiro,
     gestor: params.gestor ?? null,
-    urlVonix: params.baseUrl,
+    urlVonix: buildBaseUrl(params.customer),
     online: false,
     statusDiscador: "desconhecido",
     contatosNaFila: 0,
     agentesLogados: 0,
     agentes: [],
     contadores: { atendimento: 0, disponivel: 0, pausa: 0, offline: 0 },
+    filas: [],
+    fonteAgentes: "pendente" as FonteAgentes,
     atualizadoEm: new Date().toISOString(),
     erro: null,
   });
 
   try {
-    // TODO: confirmar caminhos reais dos endpoints
-    const [disc, ag] = await Promise.all([
-      vonixFetch<DiscadorResp>(ctx, "/v1/contatos-discador"),
-      vonixFetch<AgentesResp>(ctx, "/v1/agentes-pabx"),
-    ]);
-
-    const agentes: AgenteAoVivo[] = (ag.agentes ?? []).map((a, i) => ({
-      id: String(a.id ?? i),
-      nome: a.nome ?? `Agente ${i + 1}`,
-      status: normalizarStatus(a.status),
-      ramal: a.ramal,
-    }));
-
-    const contadores = agentes.reduce(
-      (acc, a) => {
-        acc[a.status] += 1;
-        return acc;
-      },
-      { atendimento: 0, disponivel: 0, pausa: 0, offline: 0 } as Record<
-        AgenteStatus,
-        number
-      >,
+    const queues = await getQueues(ctx);
+    const filas = await Promise.all(
+      queues.map(async (q) => {
+        try {
+          const st = await getQueueStatus(ctx, q.id);
+          return { ...st, nome: q.nome } as FilaInfo;
+        } catch {
+          return { id: q.id, nome: q.nome, status: "desconhecido", contatos: 0 } as FilaInfo;
+        }
+      }),
     );
 
     const linha = base();
     linha.online = true;
-    linha.statusDiscador = normalizarStatusDiscador(disc.status);
-    linha.contatosNaFila = disc.contatosNaFila ?? 0;
-    linha.chamadasAtivas = disc.chamadasAtivas;
-    linha.agentes = agentes;
-    linha.contadores = contadores;
-    linha.agentesLogados =
-      contadores.atendimento + contadores.disponivel + contadores.pausa;
+    linha.filas = filas;
+    linha.contatosNaFila = filas.reduce((s, f) => s + f.contatos, 0);
+    linha.statusDiscador = agregarStatusDiscador(filas);
+
+    const roster = await getRoster(ctx);
+    if (roster) {
+      linha.agentes = roster;
+      linha.contadores = contar(roster);
+      linha.agentesLogados =
+        linha.contadores.atendimento +
+        linha.contadores.disponivel +
+        linha.contadores.pausa;
+      linha.fonteAgentes = "realtime";
+    } else {
+      linha.fonteAgentes = "pendente";
+    }
     return linha;
   } catch (err) {
     const linha = base();
-    linha.erro = err instanceof Error ? err.message : "Falha ao consultar servidor";
+    linha.erro = err instanceof Error ? err.message : "Falha ao consultar o servidor Vonix";
     return linha;
   }
 }

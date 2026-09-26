@@ -78,23 +78,33 @@ src/
     dashboard/            # dashboard-view, agent-honeycomb, status-legend
     layout/ ui/
   lib/
-    vonix/client.ts       # cliente das APIs Vonix (endpoints a CONFIRMAR)
+    vonix/client.ts       # cliente das APIs Vonix (filas/discador reais; roster de agentes a definir)
     crypto.ts             # AES-256-GCM para tokens
     supabase/             # clients browser/server/service
     types.ts mock-data.ts utils.ts
 supabase/schema.sql
 ```
 
-## ⚠️ Pendências para integração real
+## Integração com as APIs Vonix
 
-1. **Liberar rede** para `sandbox.vonixcc.com.br` (e produção) — hoje bloqueada
-   no ambiente de desenvolvimento.
-2. **Confirmar endpoints e campos** das APIs em `src/lib/vonix/client.ts`
-   (marcados com `// TODO: confirmar`), a partir de:
-   - `/v1/api-docs/contatos-discador`
-   - `/v1/api-docs/agentes-pabx`
-3. Definir esquema de autenticação das APIs (Bearer / header próprio).
-4. Definir métricas adicionais do dashboard (TMA, chamadas ativas, ocupação).
+- **Base da API:** `https://{customer}.api.vonixcc.com.br` (o `customer` é o
+  identificador do parceiro, cadastrado por parceiro).
+- **Autenticação:** header `Authorization: <token>` (token cru).
+- **Fila + status do discador (integrado):** via `contatos-discador`
+  - `GET /v1/queues` → filas do token
+  - `GET /v1/queue/{id}/status` (XML) → `stored_contacts`, `status`, `last_feed`
+  - Agregação: contatos na fila = Σ `stored_contacts`; status do discador
+    derivado dos status das filas.
+
+### ⚠️ Pendência: roster de agentes ao vivo (colméia + nº logados)
+
+A API `agentes-pabx` é de **comando** (login/logout/pause/dial/status por
+agente) e **não lista os agentes logados**. O roster ao vivo (para a colméia
+e o total de agentes) virá de uma **fonte realtime/supervisão a definir** —
+ver `getRoster()` em `src/lib/vonix/client.ts`. Enquanto não definida, as
+linhas reais marcam `fonteAgentes = "pendente"` e o dashboard exibe fila e
+discador reais, com a colméia sinalizada como pendente. O modo mock (sem
+Supabase) segue exibindo a colméia completa para demonstração visual.
 
 ## Roadmap sugerido
 

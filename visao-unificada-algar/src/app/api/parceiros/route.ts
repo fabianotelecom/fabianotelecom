@@ -25,13 +25,14 @@ export async function POST(req: NextRequest) {
     id_parceiro,
     cpf_cnpj,
     razao_social,
+    customer,
     url_vonix,
     token_api,
   } = body ?? {};
 
-  if (!nome_parceiro || !id_parceiro || !url_vonix || !token_api) {
+  if (!nome_parceiro || !id_parceiro || !customer || !token_api) {
     return NextResponse.json(
-      { error: "nome_parceiro, id_parceiro, url_vonix e token_api são obrigatórios" },
+      { error: "nome_parceiro, id_parceiro, customer e token_api são obrigatórios" },
       { status: 422 },
     );
   }
@@ -56,7 +57,8 @@ export async function POST(req: NextRequest) {
       id_parceiro,
       cpf_cnpj,
       razao_social,
-      url_vonix,
+      customer,
+      url_vonix: url_vonix || null,
       token_api_enc,
     })
     .select("id, nome_parceiro")

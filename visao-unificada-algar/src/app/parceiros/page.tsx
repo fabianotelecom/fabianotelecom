@@ -22,6 +22,7 @@ const EMPTY = {
   id_parceiro: "",
   cpf_cnpj: "",
   razao_social: "",
+  customer: "",
   url_vonix: "",
   token_api: "",
 };
@@ -94,7 +95,9 @@ export default function ParceirosPage() {
               <Field label="Id Parceiro *" value={form.id_parceiro} onChange={(v) => set("id_parceiro", v)} required />
               <Field label="CPF/CNPJ" value={form.cpf_cnpj} onChange={(v) => set("cpf_cnpj", v)} />
               <Field label="Razão Social" value={form.razao_social} onChange={(v) => set("razao_social", v)} />
-              <Field label="URL Vonix *" value={form.url_vonix} onChange={(v) => set("url_vonix", v)} placeholder="https://parceiro.vonixcc.com.br" required />
+              <Field label="Identificador Vonix (customer) *" value={form.customer} onChange={(v) => set("customer", v)} placeholder="ex.: sandbox" required />
+              <p className="-mt-1 text-[11px] text-slate-500">Base da API: https://&#123;customer&#125;.api.vonixcc.com.br</p>
+              <Field label="URL do painel (opcional)" value={form.url_vonix} onChange={(v) => set("url_vonix", v)} placeholder="https://parceiro.vonixcc.com.br" />
               <div>
                 <Label>Token API *</Label>
                 <Input
@@ -124,7 +127,7 @@ export default function ParceirosPage() {
                   <th className="pb-2">Parceiro</th>
                   <th className="pb-2">Id Parceiro</th>
                   <th className="pb-2">Razão Social</th>
-                  <th className="pb-2">URL Vonix</th>
+                  <th className="pb-2">Customer</th>
                   <th className="pb-2">Ativo</th>
                 </tr>
               </thead>
@@ -134,7 +137,7 @@ export default function ParceirosPage() {
                     <td className="py-2">{p.nome_parceiro}</td>
                     <td className="py-2">{p.id_parceiro}</td>
                     <td className="py-2">{p.razao_social ?? "—"}</td>
-                    <td className="py-2 text-xs text-slate-400">{p.url_vonix}</td>
+                    <td className="py-2 text-xs text-slate-400">{p.customer}</td>
                     <td className="py-2">{p.ativo ? "Sim" : "Não"}</td>
                   </tr>
                 ))}
