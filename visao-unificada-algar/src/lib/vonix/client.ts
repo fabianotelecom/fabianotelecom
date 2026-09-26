@@ -119,14 +119,117 @@ async function getQueueStatus(ctx: VonixCtx, queueId: string): Promise<FilaInfo>
   };
 }
 
+// Máximo de agentes cujo status é consultado por ciclo (proteção).
+const MAX_STATUS_QUERIES = Number(process.env.VONIX_MAX_AGENT_STATUS ?? 200);
+// Concorrência das consultas de status.
+const STATUS_CONCURRENCY = 8;
+
+// Normaliza o status de um agente a partir dos campos possíveis da resposta.
+// O payload de /agent/{id}/status não é detalhado na spec — parsing defensivo.
+function normalizarStatusAgente(raw: Record<string, unknown>): AgenteStatus {
+  const txt = String(
+    raw.status ?? raw.state ?? raw.agentStatus ?? raw.situacao ?? "",
+  ).toLowerCase();
+  const loggedIn = raw.loggedIn ?? raw.logged ?? raw.online;
+  const paused = raw.paused ?? raw.onPause ?? raw.emPausa;
+
+  if (txt) {
+    if (txt.includes("atend") || txt.includes("call") || txt.includes("busy") || txt.includes("oncall"))
+      return "atendimento";
+    if (txt.includes("paus") || txt.includes("break") || txt.includes("acw"))
+      return "pausa";
+    if (txt.includes("dispon") || txt.includes("ready") || txt.includes("idle") || txt.includes("avail") || txt.includes("online"))
+      return "disponivel";
+    if (txt.includes("logout") || txt.includes("offline") || txt.includes("desloga"))
+      return "offline";
+  }
+  if (paused === true) return "pausa";
+  if (loggedIn === true) return "disponivel";
+  return "offline";
+}
+
+interface AgenteRaw {
+  id: string;
+  nome?: string;
+  ramal?: string;
+  ativo?: boolean;
+}
+
+// GET /agents -> lista de agentes (+ total). Tolera formatos variados.
+async function getAgents(ctx: VonixCtx): Promise<AgenteRaw[]> {
+  const res = await vonixFetch(ctx, "/agents", "application/json");
+  if (!res.ok) throw new Error(`GET /agents -> ${res.status}`);
+  const body = await res.json();
+  const raw =
+    (Array.isArray(body) && body) ||
+    body?.data ||
+    body?.agents ||
+    body?.records ||
+    body?.results ||
+    [];
+  const arr = Array.isArray(raw) ? raw : [raw];
+  return arr
+    .filter(Boolean)
+    .map((a: Record<string, any>) => ({
+      id: String(a.id ?? a.agentId ?? a.matricula ?? ""),
+      nome: a.name ?? a.nome,
+      ramal: a.extension ?? a.ramal ?? a.location,
+      // sinaliza agente ativo/habilitado quando a lista traz o campo
+      ativo: a.active ?? a.enabled ?? a.loggedIn ?? undefined,
+    }))
+    .filter((a: AgenteRaw) => a.id);
+}
+
+// POST /agent/{id}/status -> estado do agente.
+async function getAgentStatus(ctx: VonixCtx, agentId: string): Promise<Record<string, unknown> | null> {
+  const res = await vonixFetch(ctx, `/agent/${encodeURIComponent(agentId)}/status`, "application/json");
+  if (!res.ok) return null;
+  const ct = res.headers.get("content-type") ?? "";
+  if (ct.includes("application/json")) return (await res.json()) as Record<string, unknown>;
+  const t = await res.text();
+  return { status: t };
+}
+
+// Executa tarefas com limite de concorrência.
+async function mapLimit<T, R>(items: T[], limit: number, fn: (x: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let i = 0;
+  async function worker() {
+    while (i < items.length) {
+      const idx = i++;
+      out[idx] = await fn(items[idx]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
+
 /**
- * Roster de agentes ao vivo. Fonte a definir (realtime/supervisão).
- * Retorna null enquanto a fonte não estiver ligada -> a linha marca
- * fonteAgentes = "pendente".
+ * Roster de agentes ao vivo: GET /agents e, para cada agente,
+ * POST /agent/{id}/status. Devolve apenas os agentes LOGADOS (status != offline),
+ * que é o que a colméia representa. Retorna null se a lista falhar.
  */
-async function getRoster(_ctx: VonixCtx): Promise<AgenteAoVivo[] | null> {
-  // TODO: integrar quando a API/realtime de agentes for definida pelo Vonix.
-  return null;
+async function getRoster(ctx: VonixCtx): Promise<AgenteAoVivo[] | null> {
+  let agentes: AgenteRaw[];
+  try {
+    agentes = await getAgents(ctx);
+  } catch {
+    return null;
+  }
+
+  // Se a lista sinaliza agentes ativos, prioriza-os; senão consulta todos.
+  const comFlag = agentes.filter((a) => a.ativo === true);
+  const alvo = (comFlag.length > 0 ? comFlag : agentes).slice(0, MAX_STATUS_QUERIES);
+
+  const statuses = await mapLimit(alvo, STATUS_CONCURRENCY, async (a) => {
+    const st = await getAgentStatus(ctx, a.id);
+    const status = st ? normalizarStatusAgente(st) : "offline";
+    const ramal = (st?.extension ?? st?.ramal ?? a.ramal) as string | undefined;
+    return { id: a.id, nome: a.nome ?? `Agente ${a.id}`, status, ramal } as AgenteAoVivo;
+  });
+
+  // Colméia = agentes logados (exclui offline/deslogados).
+  return statuses.filter((a) => a.status !== "offline");
 }
 
 function contar(agentes: AgenteAoVivo[]): Record<AgenteStatus, number> {

@@ -96,15 +96,17 @@ supabase/schema.sql
   - Agregação: contatos na fila = Σ `stored_contacts`; status do discador
     derivado dos status das filas.
 
-### ⚠️ Pendência: roster de agentes ao vivo (colméia + nº logados)
+- **Roster de agentes / colméia (integrado):** via `agentes-pabx`
+  - `GET /agents` → lista de agentes (+ total)
+  - `POST /agent/{id}/status` → estado de cada agente (logado/pausa/ramal)
+  - A colméia mostra os agentes **logados** (status ≠ offline), coloridos pelo
+    padrão VonixCC. Consultas de status com limite de concorrência e teto
+    (`VONIX_MAX_AGENT_STATUS`).
 
-A API `agentes-pabx` é de **comando** (login/logout/pause/dial/status por
-agente) e **não lista os agentes logados**. O roster ao vivo (para a colméia
-e o total de agentes) virá de uma **fonte realtime/supervisão a definir** —
-ver `getRoster()` em `src/lib/vonix/client.ts`. Enquanto não definida, as
-linhas reais marcam `fonteAgentes = "pendente"` e o dashboard exibe fila e
-discador reais, com a colméia sinalizada como pendente. O modo mock (sem
-Supabase) segue exibindo a colméia completa para demonstração visual.
+> Observação: o payload de `/agent/{id}/status` não é detalhado na spec —
+> o parsing é defensivo (`normalizarStatusAgente` cobre variações de
+> `status`/`state`/`loggedIn`/`paused`/`ramal`). Confirmar os nomes exatos dos
+> campos com um token de sandbox e ajustar se necessário.
 
 ## Roadmap sugerido
 
