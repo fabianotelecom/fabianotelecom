@@ -10,11 +10,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Padrão de cores de status de Agentes VonixCC
+        // Padrão de cores de status de Agentes (paleta pastel)
         status: {
-          atendimento: "#F5C518", // Amarelo — Em Atendimento
-          disponivel: "#22C55E", // Verde — Disponível
-          pausa: "#EC4899", // Rosa — Em Pausa
+          atendimento: "#E5E0C5", // Amarelo pastel — Em Atendimento
+          disponivel: "#C6E5C5", // Verde pastel — Disponível
+          pausa: "#E5C5C6", // Rosa pastel — Em Pausa
           offline: "#6B7280", // Cinza — Deslogado/Offline
         },
         // Identidade visual do app (tema escuro operacional)

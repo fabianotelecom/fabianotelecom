@@ -49,9 +49,9 @@ export const STATUS_META: Record<
   AgenteStatus,
   { label: string; color: string }
 > = {
-  atendimento: { label: "Em Atendimento", color: "#F5C518" },
-  disponivel: { label: "Disponível", color: "#22C55E" },
-  pausa: { label: "Em Pausa", color: "#EC4899" },
+  atendimento: { label: "Em Atendimento", color: "#E5E0C5" }, // amarelo pastel
+  disponivel: { label: "Disponível", color: "#C6E5C5" }, // verde pastel
+  pausa: { label: "Em Pausa", color: "#E5C5C6" }, // rosa pastel
   offline: { label: "Offline", color: "#6B7280" },
 };
 
