@@ -37,6 +37,11 @@ banco e nunca trafegam para o client.
 | Em Pausa | 🩷 Rosa `#EC4899` |
 | Offline | ⚪ Cinza `#6B7280` |
 
+## Deploy
+
+Para publicar (Vercel + Supabase) e obter um URL compartilhável, veja
+[`DEPLOY.md`](./DEPLOY.md).
+
 ## Como rodar
 
 ```bash
