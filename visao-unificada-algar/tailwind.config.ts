@@ -10,12 +10,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Padrão de cores de status de Agentes (paleta pastel)
+        // Cores de status de Agentes (tons fortes, alinhados à identidade Algar)
         status: {
-          atendimento: "#E5E0C5", // Amarelo pastel — Em Atendimento
-          disponivel: "#C6E5C5", // Verde pastel — Disponível
-          pausa: "#E5C5C6", // Rosa pastel — Em Pausa
-          offline: "#6B7280", // Cinza — Deslogado/Offline
+          atendimento: "#F59E0B", // Âmbar — Em Atendimento
+          disponivel: "#10B981", // Esmeralda — Disponível
+          pausa: "#F43F5E", // Rosa/vermelho — Em Pausa
+          offline: "#64748B", // Cinza — Deslogado/Offline
         },
         // Identidade visual Algar (tema escuro: navy + teal)
         brand: {

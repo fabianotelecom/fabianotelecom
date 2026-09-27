@@ -49,10 +49,10 @@ export const STATUS_META: Record<
   AgenteStatus,
   { label: string; color: string }
 > = {
-  atendimento: { label: "Em Atendimento", color: "#E5E0C5" }, // amarelo pastel
-  disponivel: { label: "Disponível", color: "#C6E5C5" }, // verde pastel
-  pausa: { label: "Em Pausa", color: "#E5C5C6" }, // rosa pastel
-  offline: { label: "Offline", color: "#6B7280" },
+  atendimento: { label: "Em Atendimento", color: "#F59E0B" }, // âmbar forte
+  disponivel: { label: "Disponível", color: "#10B981" }, // esmeralda forte
+  pausa: { label: "Em Pausa", color: "#F43F5E" }, // rosa/vermelho forte
+  offline: { label: "Offline", color: "#64748B" },
 };
 
 export type StatusDiscador = "ativo" | "pausado" | "parado" | "desconhecido";

@@ -2,7 +2,8 @@
 
 import useSWR from "swr";
 import { useState } from "react";
-import type { LinhaDashboard, StatusDiscador } from "@/lib/types";
+import type { AgenteAoVivo, AgenteStatus, LinhaDashboard, StatusDiscador } from "@/lib/types";
+import { STATUS_META } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, Badge } from "@/components/ui/primitives";
 import { AgentHoneycomb } from "./agent-honeycomb";
 import { StatusLegend } from "./status-legend";
@@ -12,10 +13,10 @@ import { Activity, Users, ListOrdered, Radio, ChevronDown } from "lucide-react";
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const DISCADOR_META: Record<StatusDiscador, { label: string; color: string }> = {
-  ativo: { label: "Ativo", color: "#22C55E" },
-  pausado: { label: "Pausado", color: "#F5C518" },
+  ativo: { label: "Ativo", color: "#10B981" },
+  pausado: { label: "Pausado", color: "#F59E0B" },
   parado: { label: "Parado", color: "#EF4444" },
-  desconhecido: { label: "Desconhecido", color: "#6B7280" },
+  desconhecido: { label: "Desconhecido", color: "#64748B" },
 };
 
 export function DashboardView() {
@@ -39,6 +40,19 @@ export function DashboardView() {
     { fila: 0, logados: 0, online: 0 },
   );
 
+  // Colméia global: todos os agentes logados de todos os parceiros (sem offline)
+  const todosAgentes: AgenteAoVivo[] = linhas
+    .flatMap((l) => l.agentes)
+    .filter((a) => a.status !== "offline");
+
+  const contadoresGlobais = todosAgentes.reduce(
+    (acc, a) => {
+      acc[a.status] += 1;
+      return acc;
+    },
+    { atendimento: 0, disponivel: 0, pausa: 0, offline: 0 } as Record<AgenteStatus, number>,
+  );
+
   return (
     <div className="space-y-6">
       {data?.fonte === "mock" && (
@@ -56,10 +70,24 @@ export function DashboardView() {
         <Kpi icon={<Activity size={18} />} label="Parceiros" value={linhas.length} />
       </div>
 
-      <div className="flex items-center justify-between">
-        <StatusLegend />
-        {isLoading && <span className="text-xs text-slate-500">Atualizando…</span>}
-      </div>
+      {/* Colméia global — todos os agentes logados de todos os parceiros */}
+      <Card>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <CardTitle className="text-base">Colméia de Agentes</CardTitle>
+            <p className="text-xs text-slate-400">
+              {todosAgentes.length} agentes logados · todos os parceiros
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <StatusLegend contadores={contadoresGlobais} hideOffline />
+            {isLoading && <span className="text-xs text-slate-500">Atualizando…</span>}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <AgentHoneycomb agentes={todosAgentes} hexTarget={40} size={12} />
+        </CardContent>
+      </Card>
 
       {/* Uma linha por servidor */}
       <div className="space-y-3">
@@ -97,7 +125,7 @@ function ServerRow({ linha }: { linha: LinhaDashboard }) {
       >
         <div className="col-span-4 flex items-center gap-3">
           <span
-            className={`h-2.5 w-2.5 rounded-full ${linha.online ? "bg-green-500" : "bg-red-500"}`}
+            className={`h-2.5 w-2.5 rounded-full ${linha.online ? "bg-status-disponivel" : "bg-red-500"}`}
             title={linha.online ? "Online" : "Offline"}
           />
           <div>
@@ -148,24 +176,46 @@ function ServerRow({ linha }: { linha: LinhaDashboard }) {
           {linha.erro ? (
             <p className="text-sm text-red-400">{linha.erro}</p>
           ) : (
-            <div className="grid gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <CardTitle className="mb-3">Colméia de Agentes</CardTitle>
-                {linha.fonteAgentes === "pendente" ? (
-                  <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-brand-border px-4 text-center text-xs text-slate-500">
-                    Roster de agentes ao vivo pendente de definição da fonte
-                    (realtime/supervisão). Fila e status do discador já são reais.
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div>
+                <CardTitle className="mb-3">Filas do discador</CardTitle>
+                {linha.filas && linha.filas.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="text-left text-xs text-slate-500">
+                        <tr>
+                          <th className="pb-2">Fila</th>
+                          <th className="pb-2">Status</th>
+                          <th className="pb-2 text-right">Contatos</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-slate-200">
+                        {linha.filas.map((f) => (
+                          <tr key={f.id} className="border-t border-brand-border">
+                            <td className="py-1.5">{f.nome ?? f.id}</td>
+                            <td className="py-1.5 text-slate-400">
+                              {DISCADOR_META[f.status].label}
+                            </td>
+                            <td className="py-1.5 text-right">{f.contatos.toLocaleString("pt-BR")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 ) : (
-                  <AgentHoneycomb agentes={linha.agentes} />
+                  <p className="text-sm text-slate-500">Sem filas para exibir.</p>
                 )}
               </div>
               <div>
-                <CardTitle className="mb-3">Distribuição</CardTitle>
-                <StatusLegend contadores={linha.contadores} />
-                <div className="mt-4 text-xs text-slate-500">
-                  Servidor: {linha.urlVonix}
-                </div>
+                <CardTitle className="mb-3">Agentes por status</CardTitle>
+                {linha.fonteAgentes === "pendente" ? (
+                  <p className="text-xs text-slate-500">
+                    Roster de agentes indisponível para este servidor.
+                  </p>
+                ) : (
+                  <StatusLegend contadores={linha.contadores} hideOffline />
+                )}
+                <div className="mt-4 text-xs text-slate-500">Servidor: {linha.urlVonix}</div>
               </div>
             </div>
           )}

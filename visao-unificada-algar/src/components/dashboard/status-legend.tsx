@@ -2,10 +2,14 @@ import { STATUS_META, type AgenteStatus } from "@/lib/types";
 
 export function StatusLegend({
   contadores,
+  hideOffline = false,
 }: {
   contadores?: Record<AgenteStatus, number>;
+  hideOffline?: boolean;
 }) {
-  const ordem: AgenteStatus[] = ["atendimento", "disponivel", "pausa", "offline"];
+  const ordem: AgenteStatus[] = hideOffline
+    ? ["atendimento", "disponivel", "pausa"]
+    : ["atendimento", "disponivel", "pausa", "offline"];
   return (
     <div className="flex flex-wrap items-center gap-4">
       {ordem.map((s) => (
