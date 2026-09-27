@@ -16,13 +16,12 @@ export function Sidebar() {
   const path = usePathname();
   return (
     <aside className="flex w-60 flex-col border-r border-brand-border bg-brand-surface">
-      <div className="flex h-16 items-center gap-2 border-b border-brand-border px-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-accent font-bold text-white">
-          A
-        </div>
-        <div>
+      <div className="flex h-16 items-center gap-3 border-b border-brand-border px-5">
+        {/* Logo oficial Algar (SVG branco) */}
+        <img src="/algar-logo.svg" alt="Algar" className="h-6 w-auto" />
+        <div className="border-l border-brand-border pl-3">
           <div className="text-sm font-semibold text-slate-100">Visão Unificada</div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-500">Algar · Vonix</div>
+          <div className="text-[10px] uppercase tracking-wider text-brand-accent">Vonix</div>
         </div>
       </div>
       <nav className="flex-1 space-y-1 p-3">

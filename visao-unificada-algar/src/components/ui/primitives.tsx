@@ -47,7 +47,7 @@ export function Button({
   variant?: "default" | "ghost" | "outline";
 }) {
   const variants = {
-    default: "bg-brand-accent text-white hover:bg-blue-600",
+    default: "bg-brand-accent text-brand-bg font-semibold hover:bg-brand-accentDark",
     ghost: "bg-transparent text-slate-300 hover:bg-brand-border",
     outline: "border border-brand-border text-slate-200 hover:bg-brand-border",
   };

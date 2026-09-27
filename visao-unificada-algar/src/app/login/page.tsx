@@ -42,8 +42,9 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-[70vh] items-center justify-center">
       <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-base">Entrar · Visão Unificada Algar</CardTitle>
+        <CardHeader className="flex flex-col items-center gap-3 text-center">
+          <img src="/algar-logo.svg" alt="Algar" className="h-7 w-auto" />
+          <CardTitle className="text-base">Visão Unificada · Vonix</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={submit} className="space-y-3">

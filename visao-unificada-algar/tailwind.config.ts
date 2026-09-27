@@ -17,12 +17,13 @@ const config: Config = {
           pausa: "#E5C5C6", // Rosa pastel — Em Pausa
           offline: "#6B7280", // Cinza — Deslogado/Offline
         },
-        // Identidade visual do app (tema escuro operacional)
+        // Identidade visual Algar (tema escuro: navy + teal)
         brand: {
-          bg: "#0B1220",
-          surface: "#131C2E",
-          border: "#22304A",
-          accent: "#3B82F6",
+          bg: "#002B3D", // navy Algar
+          surface: "#05384A", // navy mais claro (cards)
+          border: "#0F4A5C",
+          accent: "#28BEA5", // teal Algar
+          accentDark: "#239687", // teal (hover/pressed)
         },
       },
       fontFamily: {
