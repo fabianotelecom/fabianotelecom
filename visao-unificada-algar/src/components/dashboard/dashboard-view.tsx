@@ -43,8 +43,8 @@ export function DashboardView() {
     <div className="space-y-6">
       {data?.fonte === "mock" && (
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-300">
-          Exibindo <strong>dados simulados</strong> — integração real com as APIs
-          Vonix pendente de liberação de rede e confirmação dos endpoints.
+          Exibindo <strong>dados simulados</strong> (modo demo). Configure o
+          Supabase e cadastre um parceiro para ver os dados reais dos servidores Vonix.
         </div>
       )}
 
