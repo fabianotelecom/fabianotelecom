@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import {
+  createClient,
+  createServiceClient,
+  hasSupabaseEnv,
+  hasServiceRole,
+  SEM_SUPABASE,
+} from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  if (!hasSupabaseEnv()) return NextResponse.json({ usuarios: [], aviso: SEM_SUPABASE });
   const supa = await createClient();
   const { data, error } = await supa.from("perfis").select("*").order("nome");
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
@@ -13,6 +20,11 @@ export async function GET() {
 // Cria usuário do app: cria no Auth (service_role) e o perfil.
 // Requer que o solicitante seja admin (validado via RLS na criação do perfil).
 export async function POST(req: NextRequest) {
+  if (!hasServiceRole())
+    return NextResponse.json(
+      { error: SEM_SUPABASE + " (a criação de usuários exige SUPABASE_SERVICE_ROLE_KEY)" },
+      { status: 503 },
+    );
   const body = await req.json();
   const { nome, email, senha, papel } = body ?? {};
   if (!nome || !email || !senha) {

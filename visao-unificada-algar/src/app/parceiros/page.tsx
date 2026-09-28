@@ -12,6 +12,7 @@ import {
   Label,
 } from "@/components/ui/primitives";
 import type { Gestor, Parceiro } from "@/lib/types";
+import { safeJson } from "@/lib/utils";
 
 const fetcher = (u: string) => fetch(u).then((r) => r.json());
 
@@ -47,7 +48,7 @@ export default function ParceirosPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
-    const json = await res.json();
+    const json = await safeJson(res);
     setSaving(false);
     if (!res.ok) {
       setMsg(json.error ?? "Erro ao salvar");

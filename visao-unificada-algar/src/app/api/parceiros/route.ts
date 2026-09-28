@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, hasSupabaseEnv, SEM_SUPABASE } from "@/lib/supabase/server";
 import { encryptToken } from "@/lib/crypto";
 
 export const dynamic = "force-dynamic";
 
 // Lista parceiros SEM o token (view pública).
 export async function GET() {
+  if (!hasSupabaseEnv()) return NextResponse.json({ parceiros: [], aviso: SEM_SUPABASE });
   const supa = await createClient();
   const { data, error } = await supa
     .from("parceiros_publicos")
@@ -17,6 +18,7 @@ export async function GET() {
 
 // Cria parceiro — o token_api é criptografado server-side antes de gravar.
 export async function POST(req: NextRequest) {
+  if (!hasSupabaseEnv()) return NextResponse.json({ error: SEM_SUPABASE }, { status: 503 });
   const body = await req.json();
   const {
     gestor_id,
